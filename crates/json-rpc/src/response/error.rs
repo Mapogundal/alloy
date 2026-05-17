@@ -18,6 +18,17 @@ use crate::RpcSend;
 
 const INTERNAL_ERROR: Cow<'static, str> = Cow::Borrowed("Internal error");
 
+/// JSON-RPC parse error code.
+pub const JSON_RPC_PARSE_ERROR_CODE: i64 = -32700;
+/// JSON-RPC invalid request error code.
+pub const JSON_RPC_INVALID_REQUEST_CODE: i64 = -32600;
+/// JSON-RPC method not found error code.
+pub const JSON_RPC_METHOD_NOT_FOUND_CODE: i64 = -32601;
+/// JSON-RPC invalid params error code.
+pub const JSON_RPC_INVALID_PARAMS_CODE: i64 = -32602;
+/// JSON-RPC internal error code.
+pub const JSON_RPC_INTERNAL_ERROR_CODE: i64 = -32603;
+
 /// A JSON-RPC 2.0 error object.
 ///
 /// This response indicates that the server received and handled the request,
@@ -36,32 +47,44 @@ pub struct ErrorPayload<ErrData = Box<RawValue>> {
 impl<E> ErrorPayload<E> {
     /// Create a new error payload for a parse error.
     pub const fn parse_error() -> Self {
-        Self { code: -32700, message: Cow::Borrowed("Parse error"), data: None }
+        Self { code: JSON_RPC_PARSE_ERROR_CODE, message: Cow::Borrowed("Parse error"), data: None }
     }
 
     /// Create a new error payload for an invalid request.
     pub const fn invalid_request() -> Self {
-        Self { code: -32600, message: Cow::Borrowed("Invalid Request"), data: None }
+        Self {
+            code: JSON_RPC_INVALID_REQUEST_CODE,
+            message: Cow::Borrowed("Invalid Request"),
+            data: None,
+        }
     }
 
     /// Create a new error payload for a method not found error.
     pub const fn method_not_found() -> Self {
-        Self { code: -32601, message: Cow::Borrowed("Method not found"), data: None }
+        Self {
+            code: JSON_RPC_METHOD_NOT_FOUND_CODE,
+            message: Cow::Borrowed("Method not found"),
+            data: None,
+        }
     }
 
     /// Create a new error payload for an invalid params error.
     pub const fn invalid_params() -> Self {
-        Self { code: -32602, message: Cow::Borrowed("Invalid params"), data: None }
+        Self {
+            code: JSON_RPC_INVALID_PARAMS_CODE,
+            message: Cow::Borrowed("Invalid params"),
+            data: None,
+        }
     }
 
     /// Create a new error payload for an internal error.
     pub const fn internal_error() -> Self {
-        Self { code: -32603, message: INTERNAL_ERROR, data: None }
+        Self { code: JSON_RPC_INTERNAL_ERROR_CODE, message: INTERNAL_ERROR, data: None }
     }
 
     /// Create a new error payload for an internal error with a custom message.
     pub const fn internal_error_message(message: Cow<'static, str>) -> Self {
-        Self { code: -32603, message, data: None }
+        Self { code: JSON_RPC_INTERNAL_ERROR_CODE, message, data: None }
     }
 
     /// Create a new error payload for an internal error with a custom message
@@ -70,7 +93,7 @@ impl<E> ErrorPayload<E> {
     where
         E: RpcSend,
     {
-        Self { code: -32603, message: INTERNAL_ERROR, data: Some(data) }
+        Self { code: JSON_RPC_INTERNAL_ERROR_CODE, message: INTERNAL_ERROR, data: Some(data) }
     }
 
     /// Create a new error payload for an internal error with a custom message
@@ -78,7 +101,7 @@ impl<E> ErrorPayload<E> {
     where
         E: RpcSend,
     {
-        Self { code: -32603, message, data: Some(data) }
+        Self { code: JSON_RPC_INTERNAL_ERROR_CODE, message, data: Some(data) }
     }
 
     /// Analyzes the [ErrorPayload] and decides if the request should be
@@ -144,7 +167,7 @@ where
     T: std::error::Error + RpcSend,
 {
     fn from(value: T) -> Self {
-        Self { code: -32603, message: INTERNAL_ERROR, data: Some(value) }
+        Self { code: JSON_RPC_INTERNAL_ERROR_CODE, message: INTERNAL_ERROR, data: Some(value) }
     }
 }
 
@@ -379,7 +402,19 @@ mod test {
     use alloy_sol_types::sol;
 
     use super::BorrowedErrorPayload;
-    use crate::ErrorPayload;
+    use crate::{
+        ErrorPayload, JSON_RPC_INTERNAL_ERROR_CODE, JSON_RPC_INVALID_PARAMS_CODE,
+        JSON_RPC_INVALID_REQUEST_CODE, JSON_RPC_METHOD_NOT_FOUND_CODE, JSON_RPC_PARSE_ERROR_CODE,
+    };
+
+    #[test]
+    fn standard_error_codes_match_constructors() {
+        assert_eq!(ErrorPayload::<()>::parse_error().code, JSON_RPC_PARSE_ERROR_CODE);
+        assert_eq!(ErrorPayload::<()>::invalid_request().code, JSON_RPC_INVALID_REQUEST_CODE);
+        assert_eq!(ErrorPayload::<()>::method_not_found().code, JSON_RPC_METHOD_NOT_FOUND_CODE);
+        assert_eq!(ErrorPayload::<()>::invalid_params().code, JSON_RPC_INVALID_PARAMS_CODE);
+        assert_eq!(ErrorPayload::<()>::internal_error().code, JSON_RPC_INTERNAL_ERROR_CODE);
+    }
 
     #[test]
     fn smooth_borrowing() {

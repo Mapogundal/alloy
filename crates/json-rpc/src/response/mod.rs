@@ -12,7 +12,10 @@ use std::{
 };
 
 mod error;
-pub use error::{BorrowedErrorPayload, ErrorPayload};
+pub use error::{
+    BorrowedErrorPayload, ErrorPayload, JSON_RPC_INTERNAL_ERROR_CODE, JSON_RPC_INVALID_PARAMS_CODE,
+    JSON_RPC_INVALID_REQUEST_CODE, JSON_RPC_METHOD_NOT_FOUND_CODE, JSON_RPC_PARSE_ERROR_CODE,
+};
 
 mod payload;
 pub use payload::{BorrowedResponsePayload, ResponsePayload};

@@ -16,7 +16,7 @@ use crate::{
 };
 use alloy_consensus::BlockHeader;
 use alloy_eips::{eip2718::Encodable2718, eip7928::BlockAccessList};
-use alloy_json_rpc::{RpcError, RpcRecv, RpcSend};
+use alloy_json_rpc::{RpcError, RpcRecv, RpcSend, JSON_RPC_METHOD_NOT_FOUND_CODE};
 use alloy_network::{Ethereum, Network};
 use alloy_network_primitives::{BlockResponse, ReceiptResponse};
 use alloy_primitives::{
@@ -558,7 +558,11 @@ pub trait Provider<N: Network = Ethereum>: Send + Sync {
         match self.client().request("eth_getHeaderByHash", (hash,)).await {
             Ok(header) => Ok(header),
             // eth_getHeaderByHash is non-standard; fall back to eth_getBlockByHash
-            Err(err) if err.as_error_resp().is_some_and(|e| e.code == -32601) => {
+            Err(err)
+                if err
+                    .as_error_resp()
+                    .is_some_and(|e| e.code == JSON_RPC_METHOD_NOT_FOUND_CODE) =>
+            {
                 Ok(self.get_block_by_hash(hash).await?.map(|b| b.header().clone()))
             }
             Err(err) => Err(err),
@@ -592,7 +596,11 @@ pub trait Provider<N: Network = Ethereum>: Send + Sync {
         match self.client().request("eth_getHeaderByNumber", (number,)).await {
             Ok(header) => Ok(header),
             // eth_getHeaderByNumber is non-standard; fall back to eth_getBlockByNumber
-            Err(err) if err.as_error_resp().is_some_and(|e| e.code == -32601) => {
+            Err(err)
+                if err
+                    .as_error_resp()
+                    .is_some_and(|e| e.code == JSON_RPC_METHOD_NOT_FOUND_CODE) =>
+            {
                 Ok(self.get_block_by_number(number).await?.map(|b| b.header().clone()))
             }
             Err(err) => Err(err),
